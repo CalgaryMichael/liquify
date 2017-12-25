@@ -41,11 +41,11 @@ With liquify:
 ```python
 # models.py
 class Artist:
-  __liquify__ = ["first_name", "last_name"]
+  __liquify__ = ["first", "last"]
   
-  def __init__(self, first_name, last_name):
-    self.first_name = first_name
-    self.last_name = last_name
+  def __init__(self, first, last):
+    self.first_name = first
+    self.last_name = last
 
 class Instrument:
   saxophone = [Artist("John", "Coltrane"), Artist("Ornette", "Coleman")]
