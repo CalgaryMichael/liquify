@@ -1,39 +1,36 @@
 import unittest
+from . import base_classes
 from liquify import liquify
-
-class BaseLiquify(object):
-    id = 12
-    miles = "davis"
-    john = "coltrane"
-
-    __liquify__ = dict(
-        attributes=["miles", "john"]
-    )
 
 
 class LiquifyTests(unittest.TestCase):
     def test_simple(self):
-        liquified = liquify(BaseLiquify())
+        liquified = liquify(base_classes.LiquifySimple())
+        expected_result = dict(miles="davis", john="coltrane")
         self.assertEqual(len(liquified), 2)
-        self.assertEqual(liquified["miles"], "davis")
-        self.assertEqual(liquified["john"], "coltrane")
+        self.assertEqual(liquified, expected_result)
 
     def test_multiple(self):
-        base1 = BaseLiquify()
-        base2 = BaseLiquify()
-        base2.miles = "brew"
+        solid1 = base_classes.LiquifySimple()
+        solid2 = base_classes.LiquifySimple()
+        solid2.miles = "brew"
 
-        liquified = liquify(base1, base2)
+        liquified = liquify(solid1, solid2)
+        expect_result = [
+            dict(miles="davis", john="coltrane"),
+            dict(miles="brew", john="coltrane"),
+        ]
         self.assertEqual(len(liquified), 2)
-        self.assertEqual(liquified[0]["miles"], "davis")
-        self.assertEqual(liquified[1]["miles"], "brew")
+        self.assertEqual(liquified, expect_result)
 
     def test_nested_object(self):
-        base1 = BaseLiquify()
-        base2 = BaseLiquify()
-        base2.john = "smith"
-        base1.miles = base2
-
-        liquified = liquify(base1)
+        liquified = liquify(base_classes.LiquifyNested())
+        expected_result = dict(
+            miles=dict(
+                miles="davis",
+                john="coltrane"
+            ),
+            john="coltrane"
+        )
         self.assertEqual(len(liquified), 2)
-        self.assertEqual(liquified["miles"], dict(miles="davis", john="smith"))
+        self.assertEqual(liquified, expected_result)
