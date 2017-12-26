@@ -1,16 +1,35 @@
-class LiquifySimple(object):
-    id = 12
-    miles = "davis"
-    john = "coltrane"
+class Base(object):
+    def __init__(self, id=12, miles="davis", john="coltrane", **kwargs):
+        self.id = id
+        self.miles = miles
+        self.john = john
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
+    @property
+    def artists(self):
+        return [self.miles, self.john]
+
+    def jazz(self):
+        return "Birth of Cool (1957)"
+
+
+class LiquifySimple(Base):
     __liquify__ = ["miles", "john"]
 
 
-class LiquifyComplex(LiquifySimple):
+class LiquifyComplex(Base):
     __liquify__ = dict(
         attributes=["miles", "john"],
         group="complex"
     )
 
+
 class LiquifyNested(LiquifySimple):
-    miles = LiquifySimple()
+    def __init__(self, id=12, miles=LiquifySimple(), john="coltrane", **kwargs):
+        super(LiquifyNested, self).__init__(
+            id=id, miles=miles, john=john, **kwargs
+        )
+
+    def nested(self):
+        return LiquifySimple()

@@ -12,8 +12,7 @@ class LiquifyTests(unittest.TestCase):
 
     def test_multiple(self):
         solid1 = base_classes.LiquifySimple()
-        solid2 = base_classes.LiquifySimple()
-        solid2.miles = "brew"
+        solid2 = base_classes.LiquifySimple(miles="brew")
 
         liquified = liquify(solid1, solid2)
         expect_result = [

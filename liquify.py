@@ -1,3 +1,6 @@
+import inspect
+
+
 def liquify(*args):
     processed = list()
     for solid in args:
@@ -29,7 +32,9 @@ def liquify_dict(solid, ingredients):
 
 def liquify_attr(solid, attr_name):
     attribute = getattr(solid, attr_name)
-    if not isinstance(attribute, (str, int, float, bool)):
+    if inspect.ismethod(attribute):
+        attribute = attribute()
+    if not isinstance(attribute, (str, int, float, bool, list, dict, tuple)):
         attribute = liquify(attribute)
     return attr_name, attribute
 

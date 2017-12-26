@@ -3,7 +3,7 @@ from . import base_classes
 from liquify import liquify_dict
 
 
-class LiquifyListTests(unittest.TestCase):
+class LiquifyDictTests(unittest.TestCase):
     def test_simple(self):
         solid = base_classes.LiquifySimple()
         liquified = liquify_dict(solid, dict(attributes=["id", "miles"]))
