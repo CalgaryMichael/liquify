@@ -1,4 +1,6 @@
 class Base(object):
+    _private = "You found me!"
+
     def __init__(self, id=12, miles="davis", john="coltrane", **kwargs):
         self.id = id
         self.miles = miles
@@ -12,6 +14,7 @@ class Base(object):
 
     def jazz(self):
         return "Birth of Cool (1957)"
+
 
 
 class LiquifySimple(Base):

@@ -7,7 +7,7 @@ def liquify(*args):
         try:
             ingredients = solid.__liquify__
         except AttributeError:
-            raise AttributeError("unliquifiable")
+            ingredients = parse_ingredients(solid)
         if isinstance(ingredients, list):
             processed.append(liquify_list(solid, ingredients))
         else:
@@ -37,6 +37,11 @@ def liquify_attr(solid, attr_name):
     if not isinstance(attribute, (str, int, float, bool, list, dict, tuple)):
         attribute = liquify(attribute)
     return attr_name, attribute
+
+
+def parse_ingredients(solid):
+    attributes = inspect.getmembers(solid, lambda x: not inspect.isroutine(x))
+    return list(attr for attr, value in attributes if not attr.startswith("_"))
 
 
 def append(dictionary, key, value):

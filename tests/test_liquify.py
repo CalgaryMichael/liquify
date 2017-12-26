@@ -33,3 +33,18 @@ class LiquifyTests(unittest.TestCase):
         )
         self.assertEqual(len(liquified), 2)
         self.assertEqual(liquified, expected_result)
+
+        # check for non-liquify specific nested classes
+        solid = base_classes.LiquifyNested(miles=base_classes.Base())
+        liquified = liquify(solid)
+        expected_result = dict(
+            miles=dict(
+                artists=["davis", "coltrane"],
+                id=12,
+                john="coltrane",
+                miles="davis"
+            ),
+            john="coltrane"
+        )
+        self.assertEqual(len(liquified), 2)
+        self.assertEqual(liquified, expected_result)
