@@ -1,19 +1,35 @@
+import re
 import inspect
 
 
 def liquify(*args):
-    processed = list()
+    if len(args) == 0:
+        raise ValidationError("liquify must be passed an argument")
+    elif len(args) > 1:
+        liquifier = liquify_multiple
+    else:
+        liquifier = liquify_single
+    return liquifier(*args)
+
+
+def liquify_single(solid):
+    liquified = None
+    try:
+        ingredients = solid.__liquify__
+    except AttributeError:
+        ingredients = parse_ingredients(solid)
+    if isinstance(ingredients, list):
+        liquified = liquify_list(solid, ingredients)
+    else:
+        liquified = liquify_dict(solid, ingredients)
+    return liquified
+
+
+def liquify_multiple(*args):
+    processed = dict()
     for solid in args:
-        try:
-            ingredients = solid.__liquify__
-        except AttributeError:
-            ingredients = parse_ingredients(solid)
-        if isinstance(ingredients, list):
-            processed.append(liquify_list(solid, ingredients))
-        else:
-            processed.append(liquify_dict(solid, ingredients))
-    if len(processed) == 1:
-        return processed[0]
+        group = get_liquify_group(solid)
+        _append(processed, group, liquify_single(solid))
     return processed
 
 
@@ -34,7 +50,8 @@ def liquify_attr(solid, attr_name):
     attribute = getattr(solid, attr_name)
     if inspect.ismethod(attribute):
         attribute = attribute()
-    if not isinstance(attribute, (str, int, float, bool, list, dict, tuple)):
+    builtin = (str, int, float, bool, list, dict, tuple, set)
+    if not isinstance(attribute, builtin):
         attribute = liquify(attribute)
     return attr_name, attribute
 
@@ -44,7 +61,21 @@ def parse_ingredients(solid):
     return list(attr for attr, value in attributes if not attr.startswith("_"))
 
 
-def append(dictionary, key, value):
+def get_liquify_group(solid):
+    group = _convert(solid.__class__.__name__)
+    if hasattr(solid, "__liquify__"):
+        ingredients = solid.__liquify__
+        if isinstance(ingredients, dict) and ingredients.get("group"):
+            group = solid.__liquify__["group"]
+    return group
+
+
+_camel_case_converter = re.compile('((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))')
+def _convert(name):
+    return _camel_case_converter.sub(r'_\1', name).lower()
+
+
+def _append(dictionary, key, value):
     current_value = dictionary.get(key)
     if not current_value:
         dictionary[key] = [value]
