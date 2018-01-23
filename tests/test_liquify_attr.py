@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from mock import patch
 from . import base_classes
 from liquify import liquify_attr
 

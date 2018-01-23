@@ -16,7 +16,6 @@ class Base(object):
         return "Birth of Cool (1957)"
 
 
-
 class LiquifySimple(Base):
     __liquify__ = ["miles", "john"]
 
