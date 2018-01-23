@@ -32,7 +32,7 @@ setup(
         'Programming Language :: Python :: 3.6'
     ],
     keywords='json api',
-    py_modules=["liquify.py"],
+    py_modules=["liquify"],
     extras_require={
         'test': ['mock'],
     }
