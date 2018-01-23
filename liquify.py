@@ -1,5 +1,6 @@
 import re
 import inspect
+from collections import defaultdict
 
 
 def liquify(*args):
@@ -26,10 +27,10 @@ def liquify_single(solid):
 
 
 def liquify_multiple(*args):
-    processed = dict()
+    processed = defaultdict(list)
     for solid in args:
         group = get_liquify_group(solid)
-        _append(processed, group, liquify_single(solid))
+        processed[group].append(liquify_single(solid))
     return processed
 
 
@@ -73,14 +74,3 @@ def get_liquify_group(solid):
 _camel_case_converter = re.compile('((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))')
 def _convert(name):
     return _camel_case_converter.sub(r'_\1', name).lower()
-
-
-def _append(dictionary, key, value):
-    current_value = dictionary.get(key)
-    if not current_value:
-        dictionary[key] = [value]
-    else:
-        if not isinstance(current_value, list):
-            raise AttributeError("Cannot append to a non-list item")
-        else:
-            current_value.append(value)
