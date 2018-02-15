@@ -9,9 +9,9 @@ class ParseIngredientsTests(unittest.TestCase):
         solid = base_classes.Base()
         ingredients = parse_ingredients(solid)
         expected_result = ["artists", "id", "john", "miles"]
-        self.assertEqual(ingredients, expected_result)
+        self.assertEqual(list(ingredients), expected_result)
 
         # test on a standard library object
         ingredients = parse_ingredients(decimal.Decimal())
         expected_result = ["imag", "real"]
-        self.assertEqual(ingredients, expected_result)
+        self.assertEqual(list(ingredients), expected_result)

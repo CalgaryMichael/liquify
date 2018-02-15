@@ -1,12 +1,13 @@
+import asyncio
 import unittest
-from . import base_classes
+from . import base_classes, BaseTest
 from liquify import liquify_dict
 
 
-class LiquifyDictTests(unittest.TestCase):
+class LiquifyDictTests(BaseTest):
     def test_simple(self):
         solid = base_classes.LiquifySimple()
-        liquified = liquify_dict(solid, dict(attributes=["id", "miles"]))
+        liquified = self.loop.run_until_complete(liquify_dict(solid, dict(attributes=["id", "miles"])))
         expected_result = dict(
             id=12,
             miles="davis"
@@ -17,16 +18,16 @@ class LiquifyDictTests(unittest.TestCase):
     def test_invalid_field(self):
         solid = base_classes.LiquifySimple()
         with self.assertRaises(AttributeError):
-            liquified = liquify_dict(solid, dict(attributes=["id", "fake"]))
+            liquified = self.loop.run_until_complete(liquify_dict(solid, dict(attributes=["id", "fake"])))
 
     def test_invalid_format(self):
         solid = base_classes.LiquifySimple()
         with self.assertRaises(TypeError):
-            liquified = liquify_dict(solid, ["miles"])
+            liquified = self.loop.run_until_complete(liquify_dict(solid, ["miles"]))
 
     def test_nested_object(self):
         solid = base_classes.LiquifyNested()
-        liquified = liquify_dict(solid, dict(attributes=["miles", "john"]))
+        liquified = self.loop.run_until_complete(liquify_dict(solid, dict(attributes=["miles", "john"])))
         expected_result = dict(
             miles=dict(
                 miles="davis",

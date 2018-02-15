@@ -1,58 +1,73 @@
 import re
 import inspect
+import asyncio
 
 
 def liquify(*args):
+    loop = asyncio.get_event_loop()
+    if loop.is_closed():
+        loop = asnycio.new_event_loop()
+    return loop.run_until_complete(_liquify(*args))
+
+
+async def _liquify(*args):
     if len(args) == 0:
         raise ValidationError("liquify must be passed an argument")
     elif len(args) > 1:
         liquifier = liquify_multiple
     else:
         liquifier = liquify_single
-    return liquifier(*args)
+    return await liquifier(*args)
 
 
-def liquify_single(solid):
+async def liquify_single(solid):
     liquified = None
     try:
         ingredients = solid.__liquify__
     except AttributeError:
         ingredients = parse_ingredients(solid)
     if isinstance(ingredients, list):
-        liquified = liquify_list(solid, ingredients)
+        liquified = await liquify_list(solid, ingredients)
     else:
-        liquified = liquify_dict(solid, ingredients)
+        liquified = await liquify_dict(solid, ingredients)
     return liquified
 
 
-def liquify_multiple(*args):
+async def liquify_multiple(*args):
     processed = dict()
     for solid in args:
         group = get_liquify_group(solid)
-        _append(processed, group, liquify_single(solid))
+        _append(processed, group, await liquify_single(solid))
     return processed
 
 
-def liquify_list(solid, ingredients):
+async def liquify_list(solid, ingredients):
     if not isinstance(ingredients, list):
         raise TypeError("Ingredients must be a list")
-    return dict(liquify_attr(solid, attr_name) for attr_name in ingredients)
+    attributes = dict()
+    for attribute in ingredients:
+        attr_name, value = await liquify_attr(solid, attribute)
+        attributes[attr_name] = value
+    return attributes
 
 
-def liquify_dict(solid, ingredients):
+async def liquify_dict(solid, ingredients):
     if not isinstance(ingredients, dict):
         raise TypeError("Ingredients must be a dictionary")
-    attributes = ingredients["attributes"]
-    return dict(liquify_attr(solid, attr_name) for attr_name in attributes)
+    attributes = dict()
+    for attribute in ingredients["attributes"]:
+        attr_name, value = await liquify_attr(solid, attribute)
+        attributes[attr_name] = value
+    return attributes
 
 
-def liquify_attr(solid, attr_name):
+async def liquify_attr(solid, attr_name):
     attribute = getattr(solid, attr_name)
     if inspect.ismethod(attribute):
         attribute = attribute()
     builtin = (str, int, float, bool, list, dict, tuple, set)
     if not isinstance(attribute, builtin):
-        attribute = liquify(attribute)
+        attribute = await _liquify(attribute)
     return attr_name, attribute
 
 
