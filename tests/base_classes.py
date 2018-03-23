@@ -38,3 +38,13 @@ class LiquifyNested(LiquifySimple):
 
     def nested(self):
         return LiquifySimple()
+
+
+class LiquifyDoubleNested(LiquifySimple):
+    def __init__(self, id=12, miles=LiquifyNested(), john=LiquifySimple(), **kwargs):
+        super(LiquifyDoubleNested, self).__init__(
+            id=id, miles=miles, john=john, **kwargs
+        )
+
+    def nested(self):
+        return LiquifySimple()

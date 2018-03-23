@@ -12,19 +12,25 @@ _camel_case_converter = re.compile('((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))')
 
 
 def liquify(*args, **kwargs):
-    depth = min(kwargs.pop("depth", DEFAULT_DEPTH), MAX_DEPTH)
     if len(args) == 0:
         raise ValidationError("liquify must be passed an argument")
     elif len(args) > 1:
         liquifier = liquify_multiple
     else:
         liquifier = liquify_single
-    return liquifier(*args, depth=depth)
+    depth = min(kwargs.pop("depth", DEFAULT_DEPTH), MAX_DEPTH)
+    ingredients = kwargs.get("ingredients")
+    if ingredients is not None:
+        # assert that all classes are the same
+        if not all(isinstance(arg, type(args[0])) for arg in args):
+            raise TypeError("Cannot liquify multiple classes with explicit ingredients")
+    return liquifier(*args, ingredients=ingredients, depth=depth)
 
 
-def liquify_single(solid, depth=DEFAULT_DEPTH):
+def liquify_single(solid, ingredients=None, depth=DEFAULT_DEPTH):
     liquified = None
-    ingredients = parse_ingredients(solid)
+    if ingredients is None:
+        ingredients = parse_ingredients(solid)
     liquifier = liquify_list
     if isinstance(ingredients, dict):
         liquifier = liquify_dict

@@ -5,7 +5,7 @@ from liquify import parse_ingredients
 
 
 class ParseIngredientsTests(unittest.TestCase):
-    def test_simple(self):
+    def test_without_attribute(self):
         solid = base_classes.Base()
         ingredients = parse_ingredients(solid)
         expected_result = ["artists", "id", "john", "miles"]
@@ -14,4 +14,10 @@ class ParseIngredientsTests(unittest.TestCase):
         # test on a standard library object
         ingredients = parse_ingredients(decimal.Decimal())
         expected_result = ["imag", "real"]
+        self.assertEqual(ingredients, expected_result)
+
+    def test_with_attribute(self):
+        solid = base_classes.LiquifySimple()
+        ingredients = parse_ingredients(solid)
+        expected_result = ["miles", "john"]
         self.assertEqual(ingredients, expected_result)
