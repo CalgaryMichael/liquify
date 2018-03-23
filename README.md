@@ -1,9 +1,9 @@
 # liquify
 ### An Object should know how it should be represented. So let it.
 
-liquify is a python script that reduces a class to a dictionary for JSON conversion.
+liquify is a python script that serializes a class into a dictionary for JSON conversion.
 
-The idea behind this package is to allow the knowledge of an Object's representation to live within the context of the Object itself.
+The idea behind this package is to allow the knowledge of an Object's representation to live within the context of the Object itself. Seeing as a 'one size fits all' approach to API's is not realistic, this package can also handle serializing an object based off of the fields that are explicitly passed.
 
 ### The Benefits
 * Reuse & Recycle
@@ -25,14 +25,14 @@ class Artist:
 class Instrument:
   saxophone = [Artist("John", "Coltrane"), Artist("Ornette", "Coleman")]
   trumpet = [Artist("Miles", "Davis")]
-  
-  
+
+
 # views.py
 def get_instruments(request):
   instrument = Instrument()
   instrument_dict = dict(
-    saxophone=list("{} {}".format(artist.first, artist.last) for artist in instrument.saxophone),
-    trumpet=list("{} {}".format(artist.first, artist.last) for artist in instrument.trumpet)
+    saxophone=list(dict(first=artist.first, last=artist.last) for artist in instrument.saxophone),
+    trumpet=list(dict(first=artist.first, last=artist.last) for artist in instrument.trumpet)
   )
   return JsonResponse(instrument_dict)
 ```
@@ -42,7 +42,7 @@ With liquify:
 # models.py
 class Artist:
   __liquify__ = ["first", "last"]
-  
+
   def __init__(self, first, last):
     self.first_name = first
     self.last_name = last
@@ -50,16 +50,16 @@ class Artist:
 class Instrument:
   saxophone = [Artist("John", "Coltrane"), Artist("Ornette", "Coleman")]
   trumpet = [Artist("Miles", "Davis")]
-  
+
   __liquify__ = ["saxophone", "trumpet"]
-  
-  
+
+
 # views.py
 def get_instruments(request):
   return JsonResponse(liquify(Instrument()))
 ```
 
-### Limitations
+## Limitations
 This is general purpose. Sometimes you will need to manually create dictionaries for Objects. This is not an end-all automated solution to preparing Python objects for a neutral format.
 
 This package will only convert an Object to a dictionary. This will **not** create a json object--there exist plenty of options for converting Python dictionaries to JSON format.
