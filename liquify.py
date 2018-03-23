@@ -1,6 +1,6 @@
 import re
 import inspect
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 MAX_DEPTH = 10
 
@@ -9,6 +9,8 @@ DEFAULT_DEPTH = 2
 BUILT_IN = (str, int, float, bool, list, dict, tuple, set)
 
 _camel_case_converter = re.compile('((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))')
+
+LiquifyRule = namedtuple("LiquifyRule", ["name", "rule"])
 
 
 def liquify(*args, **kwargs):
@@ -31,10 +33,11 @@ def liquify_single(solid, ingredients=None, depth=DEFAULT_DEPTH):
     liquified = None
     if ingredients is None:
         ingredients = parse_ingredients(solid)
-    liquifier = liquify_list
-    if isinstance(ingredients, dict):
-        liquifier = liquify_dict
-    return liquifier(solid, ingredients, depth=depth)
+    try:
+        ingredients = ingredients["attributes"]
+    except TypeError:
+        pass
+    return dict(liquify_ingredient(solid, ingredient, depth) for ingredient in ingredients)
 
 
 def liquify_multiple(*args, **kwargs):
@@ -45,24 +48,20 @@ def liquify_multiple(*args, **kwargs):
     return processed
 
 
-def liquify_list(solid, ingredients, depth=DEFAULT_DEPTH):
-    return dict(liquify_attr(solid, attr_name, depth) for attr_name in ingredients)
-
-
-def liquify_dict(solid, ingredients, depth=DEFAULT_DEPTH):
-    attributes = ingredients["attributes"]
-    return dict(liquify_attr(solid, attr_name, depth) for attr_name in attributes)
-
-
-def liquify_attr(solid, attr_name, depth=DEFAULT_DEPTH):
-    attribute = getattr(solid, attr_name)
-    if inspect.ismethod(attribute):
-        attribute = attribute()
-    if not isinstance(attribute, BUILT_IN):
-        if depth > 0:
-            attribute = liquify(attribute, depth=depth - 1)
-        else:
-            attribute = str(attribute)
+def liquify_ingredient(solid, ingredient, depth=DEFAULT_DEPTH):
+    if isinstance(ingredient, LiquifyRule):
+        attr_name = ingredient.name
+        attribute = ingredient.rule(solid)
+    else:
+        attr_name = ingredient
+        attribute = getattr(solid, attr_name)
+        if inspect.ismethod(attribute):
+            attribute = attribute()
+        if not isinstance(attribute, BUILT_IN):
+            if depth > 0:
+                attribute = liquify(attribute, depth=depth - 1)
+            else:
+                attribute = str(attribute)
     return attr_name, attribute
 
 
