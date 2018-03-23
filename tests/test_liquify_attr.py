@@ -22,15 +22,24 @@ class LiquifyAttrTests(unittest.TestCase):
     @patch("liquify.liquify")
     def test_nested(self, mock_liquify):
         solid = base_classes.LiquifyNested()
-        liquified = liquify_attr(solid, "john")
-        self.assertFalse(mock_liquify.called)
-
-        solid = base_classes.LiquifyNested()
         liquified = liquify_attr(solid, "miles")
         self.assertTrue(mock_liquify.called)
 
-        # check that the return of a method is also checked for nested obj
-        mock_liquify.called = False
+    @patch("liquify.liquify")
+    def test_nested__builtin(self, mock_liquify):
+        solid = base_classes.LiquifyNested()
+        liquified = liquify_attr(solid, "john")
+        self.assertFalse(mock_liquify.called)
+
+    @patch("liquify.liquify")
+    def test_nested__function(self, mock_liquify):
         solid = base_classes.LiquifyNested()
         liquified = liquify_attr(solid, "nested")
         self.assertTrue(mock_liquify.called)
+
+    @patch("liquify.liquify")
+    def test_nested__depth(self, mock_liquify):
+        solid = base_classes.LiquifyNested()
+        liquified = liquify_attr(solid, "nested", depth=0)
+        self.assertFalse(mock_liquify.called)
+        self.assertEqual(liquified, ("nested", "miles davis"))

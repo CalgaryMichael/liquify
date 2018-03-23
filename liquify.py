@@ -2,64 +2,70 @@ import re
 import inspect
 from collections import defaultdict
 
+MAX_DEPTH = 10
 
-def liquify(*args):
+DEFAULT_DEPTH = 2
+
+BUILT_IN = (str, int, float, bool, list, dict, tuple, set)
+
+_camel_case_converter = re.compile('((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))')
+
+
+def liquify(*args, **kwargs):
+    depth = min(kwargs.pop("depth", DEFAULT_DEPTH), MAX_DEPTH)
     if len(args) == 0:
         raise ValidationError("liquify must be passed an argument")
     elif len(args) > 1:
         liquifier = liquify_multiple
     else:
         liquifier = liquify_single
-    return liquifier(*args)
+    return liquifier(*args, depth=depth)
 
 
-def liquify_single(solid):
+def liquify_single(solid, depth=DEFAULT_DEPTH):
     liquified = None
-    try:
-        ingredients = solid.__liquify__
-    except AttributeError:
-        ingredients = parse_ingredients(solid)
-    if isinstance(ingredients, list):
-        liquified = liquify_list(solid, ingredients)
-    else:
-        liquified = liquify_dict(solid, ingredients)
-    return liquified
+    ingredients = parse_ingredients(solid)
+    liquifier = liquify_list
+    if isinstance(ingredients, dict):
+        liquifier = liquify_dict
+    return liquifier(solid, ingredients, depth=depth)
 
 
-def liquify_multiple(*args):
+def liquify_multiple(*args, **kwargs):
     processed = defaultdict(list)
     for solid in args:
         group = get_liquify_group(solid)
-        processed[group].append(liquify_single(solid))
+        processed[group].append(liquify_single(solid, **kwargs))
     return processed
 
 
-def liquify_list(solid, ingredients):
-    if not isinstance(ingredients, list):
-        raise TypeError("Ingredients must be a list")
-    return dict(liquify_attr(solid, attr_name) for attr_name in ingredients)
+def liquify_list(solid, ingredients, depth=DEFAULT_DEPTH):
+    return dict(liquify_attr(solid, attr_name, depth) for attr_name in ingredients)
 
 
-def liquify_dict(solid, ingredients):
-    if not isinstance(ingredients, dict):
-        raise TypeError("Ingredients must be a dictionary")
+def liquify_dict(solid, ingredients, depth=DEFAULT_DEPTH):
     attributes = ingredients["attributes"]
-    return dict(liquify_attr(solid, attr_name) for attr_name in attributes)
+    return dict(liquify_attr(solid, attr_name, depth) for attr_name in attributes)
 
 
-def liquify_attr(solid, attr_name):
+def liquify_attr(solid, attr_name, depth=DEFAULT_DEPTH):
     attribute = getattr(solid, attr_name)
     if inspect.ismethod(attribute):
         attribute = attribute()
-    builtin = (str, int, float, bool, list, dict, tuple, set)
-    if not isinstance(attribute, builtin):
-        attribute = liquify(attribute)
+    if not isinstance(attribute, BUILT_IN):
+        if depth > 0:
+            attribute = liquify(attribute, depth=depth - 1)
+        else:
+            attribute = str(attribute)
     return attr_name, attribute
 
 
 def parse_ingredients(solid):
-    attributes = inspect.getmembers(solid, lambda x: not inspect.isroutine(x))
-    return list(attr for attr, value in attributes if not attr.startswith("_"))
+    try:
+        return solid.__liquify__
+    except AttributeError:
+        attributes = inspect.getmembers(solid, lambda x: not inspect.isroutine(x))
+        return list(attr for attr, value in attributes if not attr.startswith("_"))
 
 
 def get_liquify_group(solid):
@@ -71,6 +77,5 @@ def get_liquify_group(solid):
     return group
 
 
-_camel_case_converter = re.compile('((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))')
 def _convert(name):
     return _camel_case_converter.sub(r'_\1', name).lower()

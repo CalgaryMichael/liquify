@@ -19,11 +19,6 @@ class LiquifyDictTests(unittest.TestCase):
         with self.assertRaises(AttributeError):
             liquified = liquify_dict(solid, dict(attributes=["id", "fake"]))
 
-    def test_invalid_format(self):
-        solid = base_classes.LiquifySimple()
-        with self.assertRaises(TypeError):
-            liquified = liquify_dict(solid, ["miles"])
-
     def test_nested_object(self):
         solid = base_classes.LiquifyNested()
         liquified = liquify_dict(solid, dict(attributes=["miles", "john"]))

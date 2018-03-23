@@ -8,6 +8,9 @@ class Base(object):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+    def __str__(self):
+        return "miles {}".format(self.miles)
+
     @property
     def artists(self):
         return [self.miles, self.john]
